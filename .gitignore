@@ -1,0 +1,18 @@
+# Local secrets — never commit
+*.secret
+.env
+.env.*
+ngrok.yml
+**/ngrok.yml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Working copies of filled-in files (optional: remove these lines if you DO want to commit them)
+course-context.md
+system-architecture.md
+current-level.md
