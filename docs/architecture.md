@@ -34,17 +34,32 @@ This describes how the four tools connect. Your filled-in copy lives in
   tag_management, get_fsrs_params, filtered_deck, etc.).
 - We do **not** use AnkiConnect (a different add-on) — the Anki MCP plugin replaces it.
 
-### Tunnel: ngrok (free tier)
+### Tunnel: Cloud Tunnel (built-in, recommended)
+- Available in AnkiMCP Server v0.21.1+. Enabled via **"Connect Tunnel"** in the add-on config.
+- OAuth device login through ankimcp.ai (separate account from AnkiWeb).
+- URL format: `https://tunnel.ankimcp.ai/<id>` — stable between sessions for the same install.
+- No Basic Auth credentials needed; the session token from device login handles authentication.
+- The tunnel stays active while Anki Desktop is open and reconnects automatically on restart.
+
+### Tunnel: ngrok (alternative)
+- Use if you prefer to self-host the tunnel or already have ngrok set up.
+- ⚠️ **v0.21.1+ breaking change:** `--host-header=rewrite` is now required. Without it,
+  every request fails with **421 Misdirected Request**.
 - Authtoken stored locally in ngrok's config; never commit it.
 - A reserved static domain keeps the URL stable between sessions.
 - Protected with Basic Auth (a username + a password kept in a password manager).
+- Run command:
+  ```bash
+  ngrok http 3141 --url={{NGROK_DOMAIN}} --host-header=rewrite --basic-auth="{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}"
+  ```
 - Free-tier limits (tens of thousands of requests/month) are far more than this use needs.
 
 ### Connecting in Claude
 - Add a custom connector in Settings → Connectors.
-- Claude doesn't take separate Basic-Auth fields, so credentials embed in the URL:
-  `https://USER:PASSWORD@your-domain.ngrok-free.dev`
-- Changing the Basic-Auth password means re-creating the connector (Disconnect → re-add),
+- **Cloud Tunnel:** paste `{{TUNNEL_URL}}` directly — no credentials in the URL.
+- **ngrok:** Claude doesn't take separate Basic-Auth fields, so credentials embed in the URL:
+  `https://{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}@{{NGROK_DOMAIN}}`
+- Changing the ngrok Basic-Auth password means re-creating the connector (Disconnect → re-add),
   because Claude doesn't let you edit an existing connector's URL.
 
 ## Card tagging rules
@@ -73,13 +88,13 @@ the last processed lesson when you say "add the new stuff."
 
 ## Batch-session workflow (weekly or on request)
 
-1. Open Anki Desktop (plugin auto-starts).
-2. In a terminal, run the ngrok command (see SETUP Phase 5); leave it open.
-3. Tell Claude one of: "Do the batch for this week" / "I had a lesson on [date]" / "Add the new stuff."
-4. Claude: fetches the transcript, reads the teacher doc if present, checks existing
+1. Open Anki Desktop (plugin auto-starts; Cloud Tunnel connects automatically).
+   If using ngrok (Option B): run the tunnel command in a terminal and leave it open.
+2. Tell Claude one of: "Do the batch for this week" / "I had a lesson on [date]" / "Add the new stuff."
+3. Claude: fetches the transcript, reads the teacher doc if present, checks existing
    notes by tag to avoid duplicates, shows a card preview, and on OK runs `add_notes`
    with correct tags, then runs a sync.
-5. When done: quit Anki, Ctrl-C the ngrok terminal.
+4. When done: quit Anki. (Cloud Tunnel stops with Anki; Ctrl-C the ngrok terminal if using Option B.)
 
 ## What we deliberately do NOT do
 - Don't duplicate transcripts into Notion/Drive — they live in Fireflies, read on demand.
@@ -88,6 +103,7 @@ the last processed lesson when you say "add the new stuff."
 ## Gotchas
 - First tool call after re-creating a connector may return `Session terminated` — normal,
   recovers on the next call.
-- For curl checks against ngrok, add header `ngrok-skip-browser-warning: true`
-  (Claude as an MCP client sends correct headers itself).
+- ngrok (Option B): add header `ngrok-skip-browser-warning: true` for manual curl checks
+  (Claude as an MCP client already sends correct headers).
+- ngrok (Option B) + AnkiMCP v0.21.1+: omitting `--host-header=rewrite` causes 421 errors on every request.
 - Anki shows 20 new cards/day by default — a healthy pace; raise it via Custom Study only if needed.

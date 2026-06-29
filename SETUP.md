@@ -110,33 +110,56 @@ parts are OS-independent; only the Anki-tunnel part differs.
 
 ---
 
-## Phase 5 — ngrok: the tunnel (15 min)
+## Phase 5 — Anki tunnel (15 min)
 
-**Why:** Claude's connector reaches the Anki MCP server (on localhost) through an ngrok tunnel.
+**Why:** Claude's connector reaches the Anki MCP server (on localhost) through a tunnel.
+AnkiMCP Server v0.21.1+ ships a built-in Cloud Tunnel — that is **Option A** and the
+recommended path. ngrok (**Option B**) still works but requires an extra flag.
 
-1. User installs ngrok (ngrok.com/download; on macOS `brew install ngrok` if they have Homebrew).
-2. User creates a free ngrok account and copies their authtoken, then runs
-   `ngrok config add-authtoken <TOKEN>` — user does this; you can't see the token.
-3. Have the user reserve a **static domain** (ngrok dashboard → Domains) so the URL
-   doesn't change between sessions. Note the domain (e.g. `something.ngrok-free.dev`).
-4. **Run the tunnel** (user runs in a terminal, leaves it open during batch sessions):
+### Option A — Cloud Tunnel (recommended)
+
+1. With Anki Desktop open, go to **Tools → Add-ons → AnkiMCP Server → Config**
+   (or click the AnkiMCP toolbar button, depending on your version).
+2. Click **"Connect Tunnel"**. The plugin opens a browser tab for OAuth device login —
+   sign in with your **ankimcp.ai account** (separate from AnkiWeb) when prompted.
+   If you don't have one yet, register at ankimcp.ai first.
+3. After login, the plugin shows a tunnel URL of the form
+   `https://tunnel.ankimcp.ai/<id>` — copy it.
+4. **Connect to Claude:** Claude → Settings → Connectors → Add custom connector → paste the URL.
+   No username or password needed — authentication is handled by the device login session.
+5. **Verify:** with Anki Desktop open + tunnel active, you (Claude) call `list_decks`.
+   Then create the main deck (e.g. "Spanish").
+   - First call after adding the connector may return `Session terminated` — normal, retry once.
+
+The tunnel stays active while Anki Desktop is open and reconnects automatically on restart.
+The URL (`{{TUNNEL_URL}}`) stays the same between sessions for the same install — save it
+in `system-architecture.template.md` during Phase 6.
+
+### Option B — ngrok (alternative)
+
+Use this only if you prefer to self-host the tunnel or already have ngrok set up.
+
+> ⚠️ **v0.21.1+ breaking change:** AnkiMCP Server now enforces strict Host header matching.
+> You **must** add `--host-header=rewrite` to the ngrok command, or all requests will fail
+> with **421 Misdirected Request**.
+
+1. Install ngrok (ngrok.com/download; on macOS `brew install ngrok` if you have Homebrew).
+2. Create a free ngrok account, copy your authtoken, and run:
+   `ngrok config add-authtoken <TOKEN>` — user does this; Claude can't see the token.
+3. Reserve a **static domain** (ngrok dashboard → Domains) so the URL doesn't change.
+4. **Run the tunnel** (user runs in a terminal, leave it open during sessions):
    ```bash
-   ngrok http 3141 --url=YOUR-STATIC-DOMAIN.ngrok-free.dev --basic-auth="USER:PASSWORD"
+   ngrok http 3141 --url={{NGROK_DOMAIN}} --host-header=rewrite --basic-auth="{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}"
    ```
-   They pick a username + password for Basic Auth (store in a password manager).
+   Pick a username + password for Basic Auth and store them in a password manager.
 5. **Connect to Claude:** Claude → Settings → Connectors → Add custom connector.
-   Claude doesn't support separate Basic-Auth fields, so the URL embeds credentials:
+   Claude doesn't support separate Basic-Auth fields, so embed credentials in the URL:
    ```
-   https://USER:PASSWORD@YOUR-STATIC-DOMAIN.ngrok-free.dev
+   https://{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}@{{NGROK_DOMAIN}}
    ```
-   User adds it and connects.
-6. **Verify:** with Anki Desktop open + tunnel running + connector added, you (Claude)
-   call the Anki tool to `list_decks`. Then create the main deck (e.g. "Spanish").
-   - First call right after adding a connector may return `Session terminated` — normal,
-     it recovers on the next call. Retry once.
+6. **Verify:** same as Option A — `list_decks` with Anki open.
 
-**Windows/Linux note:** same flow; ngrok and Anki both run there. The terminal command
-is identical. Homebrew is macOS-only — use the ngrok installer instead.
+**Windows/Linux note:** same flow for both options. Homebrew is macOS-only — use the ngrok installer.
 
 ---
 
@@ -146,7 +169,7 @@ Copy each `templates/*.template.md` to a working file, and you (Claude) intervie
 user to fill the placeholders (`{{LIKE_THIS}}`):
 
 - `course-context.template.md` → learner, teacher, schedule, source-of-truth links
-- `system-architecture.template.md` → their ngrok domain, ports, tags, connector details
+- `system-architecture.template.md` → their tunnel URL, ports, tags, connector details
 - `current-level.template.md` → honest starting level snapshot
 
 Ask the questions conversationally, one cluster at a time. When done, have the user
@@ -167,7 +190,7 @@ These prompts are already encoded in the Project instructions; the files are the
 
 ## Phase 8 — End-to-end test (10 min)
 
-1. Make sure Anki Desktop is open and the ngrok tunnel is running.
+1. Make sure Anki Desktop is open and the tunnel is active (Cloud Tunnel connects automatically; for ngrok, start it in a terminal first).
 2. Have the user say **"I had a lesson on [a real recorded date]."**
 3. You run the full lesson-processing flow: find transcript → read it → check Notion →
    show preview (summary, vocab Core/Stretch/Skip, mistakes) → on OK, update Notion +

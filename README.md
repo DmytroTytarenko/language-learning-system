@@ -1,6 +1,6 @@
 # 🇪🇸 Language Learning System — Replicable Template
 
-**Version 1.0.0** · see [`CHANGELOG.md`](CHANGELOG.md) for what changed between versions.
+**Version 1.1.0** · see [`CHANGELOG.md`](CHANGELOG.md) for what changed between versions.
 
 A complete, AI-assisted language-learning system built around four tools:
 **Fireflies** (lesson transcripts) + **Notion** (mistake & lesson tracking) +
@@ -57,7 +57,7 @@ Weekly "batch" sessions and monthly level reviews are built in too.
 | `CHANGELOG.md` | Version history; what existing users must do per update |
 | `SETUP.md` | The master interactive setup guide Claude follows with you |
 | `PUSH_TO_GITHUB.md` | How to push your own filled-in copy back to GitHub |
-| `docs/architecture.md` | Full technical architecture (connectors, ngrok, tagging) |
+| `docs/architecture.md` | Full technical architecture (connectors, tunnel, tagging) |
 | `docs/methodology.md` | The learning method (Core/Stretch/Skip, mistake tracking) |
 | `docs/troubleshooting.md` | Common problems and fixes |
 | `templates/course-context.template.md` | Your learner/teacher/schedule context (fill in) |
@@ -76,7 +76,7 @@ Weekly "batch" sessions and monthly level reviews are built in too.
 
 - A computer (the desktop Anki + tunnel parts assume **macOS**; notes for Windows/Linux included)
 - A **Claude** account (Pro or higher recommended for Projects + connectors)
-- Accounts you'll create during setup: **Fireflies**, **Notion**, **Anki/AnkiWeb**, **ngrok**
+- Accounts you'll create during setup: **Fireflies**, **Notion**, **Anki/AnkiWeb**, **ankimcp.ai** (for the built-in Cloud Tunnel); **ngrok** is optional if you prefer to self-host the tunnel
 - Optional: **Google account** if your teacher shares a Google Doc / uses Google Calendar
 
 ---

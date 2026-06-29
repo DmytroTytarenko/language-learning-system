@@ -30,17 +30,21 @@
 - Add-on code: `124672614` (Anki MCP). Auto-starts with Anki on `127.0.0.1:3141`.
 - Not using AnkiConnect.
 
-### Tunnel: ngrok
+### Tunnel: Cloud Tunnel (Option A — recommended)
+- **Tunnel URL:** {{TUNNEL_URL}}
+- **Auth:** ankimcp.ai account (OAuth device login — separate from AnkiWeb).
+- **Connector in Claude:** paste `{{TUNNEL_URL}}` as a custom connector — no credentials needed.
+- Tunnel is active while Anki Desktop is open; URL is stable across sessions.
+
+### Tunnel: ngrok (Option B — alternative)
 - **Static domain:** {{NGROK_DOMAIN}}
 - **Authtoken:** stored locally in ngrok config (never committed).
-- **Basic Auth user:** {{TUNNEL_USER}}  / password: {{TUNNEL_PASSWORD}} (in password manager)
-- **Run command:**
+- **Basic Auth user:** {{TUNNEL_USER}} / password: {{TUNNEL_PASSWORD}} (in password manager)
+- **Run command** (⚠️ `--host-header=rewrite` required for v0.21.1+, else 421 error):
   ```bash
-  ngrok http 3141 --url={{NGROK_DOMAIN}} --basic-auth="{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}"
+  ngrok http 3141 --url={{NGROK_DOMAIN}} --host-header=rewrite --basic-auth="{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}"
   ```
-
-### Connector in Claude
-- Custom connector URL (credentials embedded):
+- **Connector in Claude** (credentials embedded in URL):
   `https://{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}@{{NGROK_DOMAIN}}`
 - Changing the password = re-create the connector (Disconnect → re-add).
 
@@ -53,14 +57,17 @@ Source: `source_fireflies`, `source_doc`, `needs_review`.
 Stretch: pushed suspended, tagged `stretch` + `stretch_<date>`.
 
 ## Batch workflow
-1. Open Anki Desktop. 2. Run the ngrok command, leave terminal open.
-3. Tell Claude: "Do the batch for this week" / "I had a lesson on [date]" / "Add the new stuff."
-4. Claude fetches transcript → reads doc → checks tags for dupes → previews cards →
-   on OK runs add_notes with tags → syncs. 5. Quit Anki, Ctrl-C ngrok.
+1. Open Anki Desktop. Cloud Tunnel (Option A) connects automatically.
+   ngrok (Option B): run the tunnel command in a terminal and leave it open.
+2. Tell Claude: "Do the batch for this week" / "I had a lesson on [date]" / "Add the new stuff."
+3. Claude fetches transcript → reads doc → checks tags for dupes → previews cards →
+   on OK runs add_notes with tags → syncs.
+4. Quit Anki. (Cloud Tunnel stops with Anki; Ctrl-C ngrok terminal if using Option B.)
 
 ## Gotchas
 - First call after re-adding connector → `Session terminated` is normal; retry once.
-- curl checks: add header `ngrok-skip-browser-warning: true`.
+- ngrok (Option B): add header `ngrok-skip-browser-warning: true` for manual curl checks.
+- ngrok (Option B) + AnkiMCP v0.21.1+: omitting `--host-header=rewrite` causes 421 errors.
 - New-cards/day default is 20 — leave it unless you want a faster pace.
 
 ## Open questions for this learner

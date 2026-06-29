@@ -1,19 +1,37 @@
 # Troubleshooting
 
-## Anki / MCP / ngrok
+## Anki / MCP / tunnel
 
 **`Session terminated` on the first call after adding the connector.**
 Normal. The MCP session re-establishes on the next call. Retry once.
 
 **Claude says it can't reach Anki.**
 Check, in order: (1) Anki Desktop is open; (2) the Anki MCP add-on is installed
-(Tools → Add-ons should list it) and Anki was restarted after install; (3) the ngrok
-terminal is still running and shows the tunnel online; (4) the connector URL in Claude
+(Tools → Add-ons should list it) and Anki was restarted after install;
+(3a) *Cloud Tunnel:* the tunnel status in the add-on config shows "Connected" — if not,
+click "Connect Tunnel" again and re-authorise; the connector URL must match `{{TUNNEL_URL}}`;
+(3b) *ngrok:* the terminal is still running and shows the tunnel online; the connector URL
 matches your current domain *and* current Basic-Auth password.
 
-**Changed the Basic-Auth password and now it fails.**
+**Cloud Tunnel: "Connect Tunnel" button does nothing or login fails.**
+Make sure you have an ankimcp.ai account (register at ankimcp.ai — separate from AnkiWeb).
+If the OAuth page opened but you got an error, try again after clearing browser cookies for ankimcp.ai.
+
+**Cloud Tunnel URL changed unexpectedly.**
+The URL is tied to your ankimcp.ai account and install — it should not change.
+If it does (e.g. after re-installing the add-on), disconnect the old connector in Claude and
+add a new custom connector with the new `{{TUNNEL_URL}}`.
+
+**ngrok: getting 421 Misdirected Request.**
+You are running AnkiMCP Server v0.21.1+ without `--host-header=rewrite`. Stop ngrok and
+restart it with the flag:
+```bash
+ngrok http 3141 --url={{NGROK_DOMAIN}} --host-header=rewrite --basic-auth="{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}"
+```
+
+**ngrok: changed the Basic-Auth password and now it fails.**
 Claude can't edit an existing connector's URL. Disconnect it and add a new custom
-connector with the updated `https://USER:NEWPASSWORD@your-domain.ngrok-free.dev`.
+connector with the updated `https://{{TUNNEL_USER}}:{{TUNNEL_PASSWORD}}@{{NGROK_DOMAIN}}`.
 
 **ngrok shows a warning/interstitial page on curl tests.**
 Add the header `ngrok-skip-browser-warning: true`. Claude as an MCP client already
